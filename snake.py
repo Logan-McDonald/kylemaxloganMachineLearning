@@ -13,6 +13,8 @@ body=1
 head=2
 apple=3
 
+left=true
+
 class game:
 
     def __init__(self,x,y):
@@ -64,6 +66,7 @@ class game:
         self.display.fill(black)
         for y in range(len(self.matrix)):
             for x in range(len(self.matrix[y])):
+                #see what is around the snake
                 if self.matrix[y][x]==head:
                     color=blue
                 elif self.matrix[y][x]==body:
@@ -91,6 +94,13 @@ class game:
 
         pygame.display.update()    
 
+    def getData(self):
+        data={
+            'distance_apple_x':self.player.x-self.apple[0],
+            'distance_apple_y':self.player.y-self.apple[1],
+        }
+        return data
+
 class snake:
 
     def __init__(self,pos):
@@ -117,6 +127,8 @@ def main():
     g=game(9,9)
     g.start()
     while g.running:
+
+        data=g.getData()
         g.draw()
         g.clock.tick(5)
         g.update()
