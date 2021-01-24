@@ -10,9 +10,9 @@ import math,time,random
 
 class NeuralNet:
 
-    def __init__(self,x=15,y=15,filename='snake_model',train_games=100000,test_games=100,max_steps=50,gui=False):
+    def __init__(self,x=15,y=15,filename='snake_model',train_games=100000,test_games=60,max_steps=50,gui=False):
         self.filename=filename
-        self.inputs=6
+        self.inputs=7
         self.x=x
         self.y=y
         self.gui=gui
@@ -29,7 +29,7 @@ class NeuralNet:
     def getTrainingData(self):
         print('Getting Training Data . . .')
         data=[]
-        number=int(self.train_games/100)
+        number=int(self.train_games/20)
         for x in range(self.train_games):
             game=Game(x=self.x,y=self.y)
             c_data=[]
@@ -57,7 +57,7 @@ class NeuralNet:
 
     def test(self,model):
         print('Testing . . .')
-        num=int(self.test_games/100)
+        num=int(self.test_games/20)
         lengths=[]
         game=Game(x=self.x,y=self.y)
         self.game=game
@@ -69,11 +69,10 @@ class NeuralNet:
                 m=model.predict(np.array([current_state]))
                 action=list(m[0]).index(max(list(m[0])))-1
                 length=snake.length
-                done,snake,c=game.step(action)
+                done,snake,_=game.step(action)
                 if done:break
                 elif snake.length>length:steps=self.max_steps
                 else:current_state=self.getState(snake)
-                time.sleep(.05)
                 steps-=1
                 if steps==0:
                     break
@@ -130,12 +129,8 @@ class NeuralNet:
         front=self.blocked(snake,direction)
         right=self.blocked(snake,self.turnRight(snake))
         applex_pos=self.game.apple[0]-snake.x
-        # if applex_pos<0:applex_pos=-1
-        # elif applex_pos>0:applex_pos=1
         appley_pos=self.game.apple[1]-snake.y
-        # if appley_pos<0:appley_pos=-1
-        # elif appley_pos>0:appley_pos=1
-        return np.array([int(left),int(front),int(right),self.dirs[snake.dir],applex_pos,appley_pos])
+        return np.array([int(left),int(front),int(right),self.dirs[snake.dir],applex_pos,appley_pos,snake.length])
 
     def train(self):
         data=self.getTrainingData()
