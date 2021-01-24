@@ -13,33 +13,36 @@ body=1
 head=2
 apple=3
 
-left=true
+class Game:
 
-class game:
-
-    def __init__(self,x,y):
+    def __init__(self,x=9,y=9,gui=False):
         self.running=False
         self.x=x
         self.y=y
         self.bw=60
         self.w=x*self.bw
         self.h=y*self.bw
+        self.gui=gui
+        if gui:
+            self.startGui()
         self.center=(int(x/2),int(y/2))
         self.highscore=1
-        self.steps=0
         self.matrix=[[space for _ in range(x)] for _ in range(y)]
 
-    def start(self):
+    def startGui(self):
         pygame.init()
         self.clock=pygame.time.Clock()
         self.display=pygame.display.set_mode((self.w,self.h))
         pygame.display.set_caption('AI Snake')
         self.font=pygame.font.Font('freesansbold.ttf',24)
+
+    def start(self,high=1):
         py=snake(self.center)
         self.player=py
         self.matrix[self.player.y][self.player.x]=head
         self.genApple()
         self.running=True
+        return self.player
     
     def genApple(self):
         sp=[]
@@ -50,23 +53,36 @@ class game:
         self.apple=random.choice(sp)
         self.matrix[self.apple[1]][self.apple[0]]=apple
 
-    def update(self):
+    def step(self,action):
         op=(self.player.x,self.player.y)
-        self.player.move()
+        if self.player.body:last=self.player.body[-1]
+        else:last=op
+        self.player.move(action)
         pos=(self.player.x,self.player.y)
-        self.matrix[op[1]][op[0]]=space
-        self.matrix[pos[1]][pos[0]]=head
+        d1=math.sqrt(math.pow(op[0]-self.apple[0],2)+math.pow(op[1]-self.apple[1],2))
+        d2=math.sqrt(math.pow(self.player.x-self.apple[0],2)+math.pow(self.player.y-self.apple[1],2))
+        if d2>d1:closer=False
+        else:closer=True
         if pos==self.apple:
             self.player.length+=1
-            self.body.append(op)
-        elif pos in self.player.body or pos[0]<0 or pos[0]==self.x or pos[1]<0 or pos[1]==self.y:
+            self.player.body.append(last)
+            self.genApple()
+        self.matrix=[[space for _ in range(self.x)] for _ in range(self.y)]
+        for b in self.player.body:
+            self.matrix[b[1]][b[0]]=body
+        if pos in self.player.body or pos[0]<0 or pos[0]>=self.x or pos[1]<0 or pos[1]>=self.y:
             self.running=False
+            return not self.running,self.player,closer
+        self.matrix[self.apple[1]][self.apple[0]]=apple
+        self.matrix[pos[1]][pos[0]]=head
+        if self.player.length>self.highscore:self.highscore=self.player.length
+        if self.gui:self.draw()
+        return not self.running,self.player,closer
 
     def draw(self):
         self.display.fill(black)
         for y in range(len(self.matrix)):
             for x in range(len(self.matrix[y])):
-                #see what is around the snake
                 if self.matrix[y][x]==head:
                     color=blue
                 elif self.matrix[y][x]==body:
@@ -94,22 +110,25 @@ class game:
 
         pygame.display.update()    
 
-    def getData(self):
-        data={
-            'distance_apple_x':self.player.x-self.apple[0],
-            'distance_apple_y':self.player.y-self.apple[1],
-        }
-        return data
-
 class snake:
 
     def __init__(self,pos):
         self.x,self.y=pos
         self.body=[]
         self.length=1
-        self.dir=0
+        self.dir=random.choice(('up','left','right','down'))
 
-    def move(self):
+    def move(self,action):
+        if action==-1:
+            if self.dir=='up':self.dir='left'
+            elif self.dir=='left':self.dir='down'
+            elif self.dir=='down':self.dir='right'
+            elif self.dir=='right':self.dir='up'
+        elif action==1:
+            if self.dir=='up':self.dir='right'
+            elif self.dir=='right':self.dir='down'
+            elif self.dir=='down':self.dir='left'
+            elif self.dir=='left':self.dir='up'
         if self.body:
             for b in range(len(self.body)-1,0,-1):
                 self.body[b]=self.body[b-1]
@@ -124,11 +143,9 @@ class snake:
             self.x+=1
 
 def main():
-    g=game(9,9)
+    g=Game(9,9)
     g.start()
     while g.running:
-
-        data=g.getData()
         g.draw()
         g.clock.tick(5)
         g.update()
