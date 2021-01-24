@@ -5,7 +5,6 @@ from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.layers import Dense
 from keras.models import load_model
-import tensorflow as tf
 import math,time,random
 
 class NeuralNet:
